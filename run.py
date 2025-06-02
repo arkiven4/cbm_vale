@@ -401,9 +401,9 @@ for model_name in model_array:
     model_thr[model_name] = 0
 
 for model_now in model_array:
-    with open(f'loss_fold/{args.dataset}/{model_now}.pickle', 'rb') as handle:
-        loss = pickle.load(handle)
-    model_thr[model_now] = [np.percentile(loss[:, index], 99) for index in range(len(feature_set))]
+    with open(f'mini_loss_fold/{args.dataset}/{model_now}.pickle', 'rb') as handle:
+        loss_temp = pickle.load(handle)
+    model_thr[model_now] = loss_temp
 
 measured_horizon = 60 * 2 * 1
 

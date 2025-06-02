@@ -1,0 +1,1 @@
+python run.py --dataset CustomAWGN30ES15 --model "" --Device cpu --test
