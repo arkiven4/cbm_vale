@@ -204,6 +204,7 @@ def getdf_piserver(piServer, pi_tag, time_list):
 
     master_pd = master_pd.values
     master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set + ['Grid Selection'])
+    #master_pd.to_csv('example.csv', index=False)
     df_sel = master_pd.iloc[-120:, :]
     df_sel = df_sel.reset_index(drop=True)
 
@@ -389,7 +390,7 @@ feature_tag_mapping = {
     'Penstock pressure': 'U-LGS1-PT-81150-AI'
 }
 
-tag_array = [feature_tag_mapping[feature] for feature in feature_set]
+tag_array = [feature_tag_mapping[feature] for feature in feature_set + ['Grid Selection']]
 
 with open('normalize_2023.pickle', 'rb') as handle:
     normalize_obj = pickle.load(handle)
@@ -408,6 +409,7 @@ for model_now in model_array:
 measured_horizon = 60 * 2 * 1
 
 init_db_timeconst(feature_set, "db/original_data.db", "original_data")
+init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "severity_trendings")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "original_sensor")
 for model_name in model_array:
@@ -420,13 +422,15 @@ piServer.Connect(False)                                                         
 print ('Connected to server: ' + "PTI-PI")
 
 count = 0
-#df_timestamp_last = np.datetime64('2020-04-28T04:16:00.000000000')
-conn = sqlite3.connect("db/original_data.db")
-cursor = conn.cursor()
-cursor.execute(f"""SELECT * FROM original_data order by rowid desc LIMIT 1""")
-rows = cursor.fetchall()
-conn.close()
-df_timestamp_last = np.datetime64(np.array(rows)[:, 1][0]) 
+try:
+    conn = sqlite3.connect("db/original_data.db")
+    cursor = conn.cursor()
+    cursor.execute(f"""SELECT * FROM original_data order by rowid desc LIMIT 1""")
+    rows = cursor.fetchall()
+    conn.close()
+    df_timestamp_last = np.datetime64(np.array(rows)[:, 1][0]) 
+except:
+    df_timestamp_last = np.datetime64('2020-04-28T04:16:00.000000000') 
 
 while True:
     print("Executing task... " + str(count))
