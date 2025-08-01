@@ -204,6 +204,7 @@ def getdf_piserver(piServer, pi_tag, time_list):
 
     master_pd = master_pd.values
     master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set + ['Grid Selection'])
+    #master_pd.to_csv('example.csv', index=False)
     df_sel = master_pd.iloc[-120:, :]
     df_sel = df_sel.reset_index(drop=True)
 
@@ -586,6 +587,7 @@ for model_now in model_array:
 measured_horizon = 60 * 2 * 1
 
 init_db_timeconst(feature_set, "db/original_data.db", "original_data")
+init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
 init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "severity_trendings")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "original_sensor")
