@@ -665,9 +665,11 @@ while True:
     timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor") 
 
     if now_time.hour >= 1:
-        today = now.date()
-        if last_execution_date_kpi != today:
-            df_selkpi = getdf_piserverKPI(piServer, pi_tag, time_list, [k for k,v in feature_tag_mappingKPI.items()])
+        today = now_time.date()
+        start_time = now_time - timedelta(hours=24)
+        time_list_KPI = [start_time.strftime('%Y-%m-%d %H:%M:%S'), now_time.strftime('%Y-%m-%d %H:%M:%S')]
+        if last_execution_date_kpi is None or last_execution_date_kpi < today:
+            df_selkpi = getdf_piserverKPI(piServer, [v for k,v in feature_tag_mappingKPI.items()], time_list_KPI, [k for k,v in feature_tag_mappingKPI.items()])
             for value in plant_metadata.values():
                 for tags in value:
                     unit_name = tags['name']
