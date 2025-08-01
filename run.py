@@ -216,6 +216,94 @@ def getdf_piserver(piServer, pi_tag, time_list):
     df_sel = df_sel[['TimeStamp'] + feature_set] 
     return df_sel, df_additional
 
+def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
+    timerange = AFTimeRange(time_list[0], time_list[1])
+    master_pd = ""
+    for i in range(len(pi_tag)):
+        tag = PIPoint.FindPIPoint(piServer, pi_tag[i])
+        value_resp = parse_recorded_events(tag.InterpolatedValues(timerange, AFTimeSpan.Parse('1m'), '', False))
+        if i == 0:
+            value_resp['Timestamps'] = pd.to_datetime(value_resp['Timestamps'])
+            master_pd = value_resp
+        else:
+            master_pd = pd.concat([master_pd, value_resp['Values']], axis=1, join='inner')
+
+    master_pd = master_pd.values
+    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set)
+    df_sel = master_pd.reset_index(drop=True)
+
+    for column_name in df_sel.columns:
+        if column_name != 'Load_Type' and column_name != 'TimeStamp':
+            df_sel[column_name] = pd.to_numeric(df_sel[column_name], downcast='float')
+
+    df_sel = df_sel[['TimeStamp'] + feature_set] 
+    return df_sel
+
+def process_shutdown_and_snl_periods(df_selected, column_name):
+    data_timestamp = df_selected[['TimeStamp']].values
+    sensor_datas = df_selected[column_name].values
+
+    activepower_data = sensor_datas[:, 0].astype(float)
+    rpm_data = sensor_datas[:, 1].astype(float)
+
+    shutdown_mask = (activepower_data <= 3) & (rpm_data <= 10)
+    snl_mask = (activepower_data <= 3) & (rpm_data >= 259.35) & (rpm_data <= 286.65)
+
+    def extract_periods(mask):
+        change_points = np.diff(mask.astype(int), prepend=0)
+        start_indices = np.where(change_points == 1)[0]
+        end_indices = np.where(change_points == -1)[0]
+
+        if mask[-1]:
+            end_indices = np.append(end_indices, len(mask))
+        if mask[0]:
+            start_indices = np.insert(start_indices, 0, 0)
+
+        periods = []
+        for start, end in zip(start_indices, end_indices):
+            start_time = data_timestamp[start][0]
+            end_time = data_timestamp[end - 1][0]
+            periods.append((start_time, end_time))
+        return periods
+
+    shutdown_periods = extract_periods(shutdown_mask)
+    snl_periods = extract_periods(snl_mask)
+
+    return shutdown_periods, snl_periods
+
+def compute_oee_metrics(df_selected, column_name, shutdown_periods, snl_periods, performance_formula):
+    data_timestamp = df_selected[['TimeStamp']].values.flatten()
+    sensor_datas = df_selected[column_name].values
+
+    active_power = sensor_datas[:, 0].astype(float)
+
+    nonzeroneg_mask = active_power > 0
+    total_hours = (pd.to_datetime(str(data_timestamp[-1])) - pd.to_datetime(str(data_timestamp[0]))).total_seconds() / 3600
+
+    downtime_hours = sum(
+        (pd.to_datetime(str(end)) - pd.to_datetime(str(start))).total_seconds() / 3600
+        for start, end in shutdown_periods
+    )
+    snl_hours = sum(
+        (pd.to_datetime(str(end)) - pd.to_datetime(str(start))).total_seconds() / 3600
+        for start, end in snl_periods
+    )
+
+    phy_avail = max(round((total_hours - downtime_hours) / total_hours, 2), 0.01)
+    uo_Avail = max(round((total_hours - snl_hours) / total_hours, 2), 0.01)
+
+    if np.any(nonzeroneg_mask):
+        log_mean = np.mean(np.log(active_power[nonzeroneg_mask]))
+        performance = max(round((performance_formula[0] * log_mean + performance_formula[1]) / 100, 2), 0)
+    else:
+        performance = 0.01
+
+    oee = max(round(phy_avail * performance * uo_Avail, 2), 0.01)
+    datetime_nowMidnight = pd.to_datetime(str(data_timestamp[-1])).replace(hour=1, minute=0, second=0)
+
+    return datetime_nowMidnight, oee, phy_avail, performance, uo_Avail
+
+
 def init_db(feature_set, db_name="masters_data.db", table_name="severity_trending"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -333,6 +421,58 @@ def convert_timestamp(timestamp_str):
     dt = datetime.fromisoformat(timestamp_str)
     return pd.Timestamp(dt.strftime('%Y-%m-%d %H:%M:%S'))
 
+plant_metadata = {
+    'Larona': [{
+        'name': "LGS1",
+        'active_power': 'LGS1 Active Power',
+        'rpm': 'LGS1 Governor Unit Speed Actual',
+        'aux': 'LGS1-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [20.944, 11.398]
+    },
+    {
+        'name': "LGS2",
+        'active_power': 'LGS2 Active Power',
+        'rpm': 'LGS2 Governor Unit Speed Actual',
+        'aux': 'LGS2-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [21.162, 8.49]
+    },
+    {
+        'name': "LGS3",
+        'active_power': 'LGS3 Active Power',
+        'rpm': 'LGS3 Governor Unit Speed Actual',
+        'aux': 'LGS3-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [19.66, 13.676]
+    }],
+    'Balambano': [{
+        'name': "BGS1",
+        'active_power': 'BGS1 Power',
+        'rpm': 'GEN SPEED BGS1',
+        'aux': 'BGS1-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [20.944, 11.398]
+    },
+    {
+        'name': "BGS2",
+        'active_power': 'BGS2 Power',
+        'rpm': 'GEN SPEED BGS2',
+        'aux': 'BGS2-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [21.162, 8.49]
+    }],
+    'Karebbe': [{
+        'name': "KGS1",
+        'active_power': 'K U1 Active Power (MW)',
+        'rpm': 'K U1 Turb Gov Turbine Speed (RPM)',
+        'aux': 'KGS1-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [20.944, 11.398]
+    },
+    {
+        'name': "KGS2",
+        'active_power': 'K U2 Active Power (MW)',
+        'rpm': 'K U2 Turb Gov Turbine Speed (RPM)',
+        'aux': 'KGS2-Auxiliary Grid (0 = ACTIVE)',
+        'coef': [21.162, 8.49]
+    }]
+}
+
 feature_set = ['Active Power', 'Reactive Power', 'Governor speed actual', 'UGB X displacement', 'UGB Y displacement',
     'LGB X displacement', 'LGB Y displacement', 'TGB X displacement',
     'TGB Y displacement', 'Stator winding temperature 13',
@@ -389,7 +529,45 @@ feature_tag_mapping = {
     'Penstock pressure': 'U-LGS1-PT-81150-AI'
 }
 
-tag_array = [feature_tag_mapping[feature] for feature in feature_set]
+feature_tag_mappingKPI = {
+    'LGS1 Active Power': 'U-LGS1-Active-Power-AI',
+    'LGS1-Auxiliary Grid (0 = ACTIVE)': 'U-LGS1-N75-15-0-AI',
+    'LGS1 Governor Unit Speed Actual': 'U-LGS1-SI-81101-AI',
+    
+    'LGS2 Active Power': 'U-LGS2-Active-Power-AI',
+    'LGS2-Auxiliary Grid (0 = ACTIVE)': 'U-LGS2-N75-25-0-AI',
+    'LGS2 Governor Unit Speed Actual': 'U-LGS2-SI-81201-AI',
+    
+    'LGS3 Active Power': 'U-LGS3_Active-Power-AI',
+    'LGS3-Auxiliary Grid (0 = ACTIVE)': 'U-LGS3-N75-35-0-AI',
+    'LGS3 Governor Unit Speed Actual': 'U-LGS3_SI_81301_I_Eng-AI',
+
+    'Avg Hydro Power Available 1D (Avg)': 'U-PWR-HYDRO-AI-AVGD',
+    'Total Hydro Power Daily (Tot)': 'U-HGST-Power-AI-DTT',
+    'Total Larona Power Daily (Tot)': 'U-PWR-LAR-TOT-DTT',
+    'Total Balambano Power Daily (Tot)': 'U-PWR-BAL-TOT-DTT',
+    'Total Karebbe Power Daily (Tot)': 'U-PWR-KAR-TOT-DTT', 
+
+    # BGS
+    'BGS1 Power': 'U-BGS1-Power-AI',
+    'BGS1-Auxiliary Grid (0 = ACTIVE)': 'U-BGS1-N75-45-0-AI',
+    'GEN SPEED BGS1': 'U-BGS1_I_T_SPEED-AI',
+
+    'BGS2 Power': 'U-BGS2-Power-AI',
+    'BGS2-Auxiliary Grid (0 = ACTIVE)': 'U-BGS2-N75-55-0-AI',
+    'GEN SPEED BGS2': 'U-BGS2_I_T_SPEED-AI',
+
+    # KGS
+    'K U1 Active Power (MW)': 'U-KGS1-Active_Power_AI',
+    'KGS1-Auxiliary Grid (0 = ACTIVE)': 'U-KGS1-N75-65-0-AI',
+    'K U1 Turb Gov Turbine Speed (RPM)': 'U-KGS1-Turb_Gov_Turb_Speed-AI',
+
+    'K U2 Active Power (MW)': 'U-KGS2-Active_Power_AI',
+    'KGS2-Auxiliary Grid (0 = ACTIVE)': 'U-KGS2-N75-75-0-AI',
+    'K U2 Turb Gov Turbine Speed (RPM)': 'U-KGS2-Turb_Gov_Turb_Speed-AI',
+}
+
+tag_array = [feature_tag_mapping[feature] for feature in feature_set + ['Grid Selection']]
 
 with open('normalize_2023.pickle', 'rb') as handle:
     normalize_obj = pickle.load(handle)
@@ -408,25 +586,35 @@ for model_now in model_array:
 measured_horizon = 60 * 2 * 1
 
 init_db_timeconst(feature_set, "db/original_data.db", "original_data")
+init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "severity_trendings")
 init_db_timeconst(feature_set, "db/severity_trendings.db", "original_sensor")
 for model_name in model_array:
     init_db_timeconst(feature_set, "db/pred_data.db", model_name)
     init_db_timeconst(feature_set, "db/threshold_data.db", model_name)
 
+for value in plant_metadata.values():
+    for value2 in value:
+        init_db_timeconst(['oee', 'phy_avail', 'performance', 'uo_Avail', "aux_0", "aux_1"], "db/kpi.db", value2['name'])
+init_db_timeconst(['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'], "db/kpi.db", "PowerProd")
+
 piServers = PIServers()
 piServer = piServers["PTI-PI"]                                                    #Write PI Server Name
 piServer.Connect(False)                                                             #Connect to PI Server
 print ('Connected to server: ' + "PTI-PI")
 
+
+last_execution_date_kpi = None
 count = 0
-#df_timestamp_last = np.datetime64('2020-04-28T04:16:00.000000000')
-conn = sqlite3.connect("db/original_data.db")
-cursor = conn.cursor()
-cursor.execute(f"""SELECT * FROM original_data order by rowid desc LIMIT 1""")
-rows = cursor.fetchall()
-conn.close()
-df_timestamp_last = np.datetime64(np.array(rows)[:, 1][0]) 
+try:
+    conn = sqlite3.connect("db/original_data.db")
+    cursor = conn.cursor()
+    cursor.execute(f"""SELECT * FROM original_data order by rowid desc LIMIT 1""")
+    rows = cursor.fetchall()
+    conn.close()
+    df_timestamp_last = np.datetime64(np.array(rows)[:, 1][0]) 
+except:
+    df_timestamp_last = np.datetime64('2020-04-28T04:16:00.000000000')
 
 while True:
     print("Executing task... " + str(count))
@@ -473,6 +661,58 @@ while True:
 
     timeseries_savedb(df_timestampi, trend_data, feature_set, "db/severity_trendings.db", "severity_trendings") 
     timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor") 
+
+    if now_time.hour >= 1:
+        today = now.date()
+        if last_execution_date_kpi != today:
+            df_selkpi = getdf_piserverKPI(piServer, pi_tag, time_list, [k for k,v in feature_tag_mappingKPI.items()])
+            for value in plant_metadata.values():
+                for tags in value:
+                    unit_name = tags['name']
+
+                    if tags['active_power'] not in df_selkpi.columns or tags['rpm'] not in df_selkpi.columns:
+                        continue  # Skip if required data not present
+
+                    df_unit = df_selkpi[['TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
+                    if df_unit.empty:
+                        continue
+
+                    # Process shutdown & SNL
+                    shutdown_periods, snl_periods = process_shutdown_and_snl_periods(
+                        df_unit, [tags['active_power'], tags['rpm']]
+                    )
+
+                    # Compute OEE and related KPIs
+                    datetime_nowMidnight, oee, phy_avail, performance, uo_Avail = compute_oee_metrics(
+                        df_unit, [tags['active_power'], tags['rpm']],
+                        shutdown_periods, snl_periods,
+                        performance_formula=tags['coef']
+                    )
+
+                    # Count Auxiliary Grid ON/OFF
+                    counts_aux = df_unit[tags['aux']].value_counts().sort_index()
+                    aux_0 = counts_aux.get(0.0, 0)
+                    aux_1 = counts_aux.get(1.0, 0)
+
+                    # Save to database
+                    timeseries_savedb(
+                        datetime_nowMidnight,
+                        np.array([oee, phy_avail, performance, uo_Avail, aux_0, aux_1]),
+                        ['oee', 'phy_avail', 'performance', 'uo_Avail', 'aux_0', 'aux_1'],
+                        "db/kpi.db",
+                        unit_name
+                    )
+
+            pda_datas = df_selkpi[['Total Hydro Power Daily (Tot)', 'Avg Hydro Power Available 1D (Avg)' , 'Total Larona Power Daily (Tot)', 'Total Balambano Power Daily (Tot)', 'Total Karebbe Power Daily (Tot)']].mean().values
+            timeseries_savedb(
+                    datetime_nowMidnight,
+                    np.array([pda_datas[0], pda_datas[1], pda_datas[2], pda_datas[3], pda_datas[3]]).astype(np.float64),
+                    ['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'],
+                    "db/kpi.db",
+                    "PowerProd"
+                )
+            print("Calc KPI")
+            last_execution_date_kpi = today
 
     # DONT REMOVE THIS
     df_timestamp_last = df_timestamp[-1]
