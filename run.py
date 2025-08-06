@@ -608,62 +608,13 @@ print ('Connected to server: ' + "PTI-PI")
 
 last_execution_date_kpi = None
 count = 0
-try:
-    conn = sqlite3.connect("db/original_data.db")
-    cursor = conn.cursor()
-    cursor.execute(f"""SELECT * FROM original_data order by rowid desc LIMIT 1""")
-    rows = cursor.fetchall()
-    conn.close()
-    df_timestamp_last = np.datetime64(np.array(rows)[:, 1][0]) 
-except:
-    df_timestamp_last = np.datetime64('2020-04-28T04:16:00.000000000')
-
 while True:
     print("Executing task... " + str(count))
     
     now_time = datetime.utcnow()
     start_time = now_time - timedelta(minutes=measured_horizon)
     time_list = [start_time.strftime('%Y-%m-%d %H:%M:%S'), now_time.strftime('%Y-%m-%d %H:%M:%S')]
-    df_sel, df_additional = getdf_piserver(piServer, tag_array, time_list)
-
-    threshold_percentages = {}
-    temp_ypreds = {}
-
-    testD, testO, df_timestamp, df_feature = preprocessPD_loadData(df_sel)
-    threshold_percentages, temp_ypreds = calcThres_allModel(threshold_percentages, temp_ypreds, model_array, testD, testO)
-
-    df_feature = denormalize3(df_feature, min_a, max_a)
-    df_feature_mean = trunc(np.mean(df_feature.values, axis=0), decs=2)
-
-    df_feature = resample(df_feature, 20, axis=0)
-    df_additional = resample(df_additional, 20, axis=0)
-    df_timestamp = df_timestamp.dt.floor("min")[::6].values[:20]
-    for i in range(len(model_array)):
-        temp_ypreds[i] = resample(temp_ypreds[i], 20, axis=0)
-
-    mask = df_timestamp > df_timestamp_last
-    df_feature = df_feature[mask]
-    df_additional = df_additional[mask]
-    df_timestamp = df_timestamp[mask]
-    for i in range(len(model_array)):
-        temp_ypreds[i] = temp_ypreds[i][mask]
-
-    # Trending
-    counter_feature_trd = calc_counterPercentageTrending(threshold_percentages)
-    trend_data = np.array([counter_feature_trd[key]['percentage'] for key in counter_feature_trd])
-    
-    batch_timeseries_savedb(df_timestamp, trunc(df_feature, decs=2), feature_set, "db/original_data.db", "original_data")
-    batch_timeseries_savedb(df_timestamp, trunc(df_additional, decs=2), ['Grid Selection'], "db/original_data.db", "additional_original_data")
-    for idx_model, (model_name) in enumerate(model_array):
-        batch_timeseries_savedb(df_timestamp, trunc(temp_ypreds[idx_model], decs=2), feature_set, "db/pred_data.db", model_name) 
-
-    df_timestampi = pd.to_datetime(df_timestamp[-1])
-    for model_idx, model_name in enumerate(model_array):
-        timeseries_savedb(df_timestampi, trunc(np.array(list(threshold_percentages[model_idx].values())), decs=2), feature_set, "db/threshold_data.db", model_name) 
-
-    timeseries_savedb(df_timestampi, trend_data, feature_set, "db/severity_trendings.db", "severity_trendings") 
-    timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor") 
-
+ 
     if now_time.hour >= 1:
         today = now_time.date()
         start_time = now_time - timedelta(hours=24)
