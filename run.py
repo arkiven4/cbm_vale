@@ -547,7 +547,7 @@ feature_tag_mappingKPI = {
     'Total Hydro Power Daily (Tot)': 'U-HGST-Power-AI-DTT',
     'Total Larona Power Daily (Tot)': 'U-PWR-LAR-TOT-DTT',
     'Total Balambano Power Daily (Tot)': 'U-PWR-BAL-TOT-DTT',
-    'Total Karebbe Power Daily (Tot)': 'U-PWR-KAR-TOT-DTT', 
+    'Total Karebbe Power Daily (Tot)': 'U-PWR-BAL-TOT-DTT', 
 
     # BGS
     'BGS1 Power': 'U-BGS1-Power-AI',
@@ -664,7 +664,8 @@ while True:
     timeseries_savedb(df_timestampi, trend_data, feature_set, "db/severity_trendings.db", "severity_trendings") 
     timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor") 
 
-    if now_time.hour >= 1:
+    if now_time.hour >= 1 or last_execution_date_kpi == None:
+        print("Enter 1")
         today = now_time.date()
         start_time = now_time - timedelta(hours=24)
         time_list_KPI = [start_time.strftime('%Y-%m-%d %H:%M:%S'), now_time.strftime('%Y-%m-%d %H:%M:%S')]
