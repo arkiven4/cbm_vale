@@ -24,7 +24,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-
 def parse_recorded_events(recorded):
     parsed_events = []
     for event in recorded:
@@ -212,5 +211,4 @@ while True:
         last_execution_date_kpi = today
 
     # DONT REMOVE THIS
-    df_timestamp_last = df_timestamp[-1]
     time.sleep(interval_gap)

@@ -200,7 +200,10 @@ while True:
     for model_now in model_array:
         ypred_models[model_now] = ypred_models[model_now][:min_len]
 
-    mask = df_timestamp > df_timestamp_last
+    if df_timestamp_last is not None:
+        mask = df_timestamp > df_timestamp_last
+    else:
+        mask = pd.Series([True] * len(df_timestamp))
     df_feature = df_feature[mask]
     df_additional = df_additional[mask]
     df_timestamp = df_timestamp[mask]

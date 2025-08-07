@@ -7,5 +7,5 @@ REM Run the Python script with arguments
 start cmd /k python run_cbm.py --dataset CustomAWGN30ES15 --model "" --Device cpu --test
 start cmd /k python run_kpi.py
 
-REM Optional: pause to see output before window closes
-pause
+REM Exit this launcher terminal
+exit
