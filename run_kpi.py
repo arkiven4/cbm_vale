@@ -24,6 +24,36 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
+def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
+    timerange = AFTimeRange(time_list[0], time_list[1])
+    master_pd = ""
+    for i in range(len(pi_tag)):
+        tag = PIPoint.FindPIPoint(piServer, pi_tag[i])
+        value_resp = parse_recorded_events(tag.InterpolatedValues(timerange, AFTimeSpan.Parse('1m'), '', False))
+        if i == 0:
+            value_resp['Timestamps'] = pd.to_datetime(value_resp['Timestamps'])
+            master_pd = value_resp
+        else:
+            master_pd = pd.concat([master_pd, value_resp['Values']], axis=1, join='inner')
+
+    master_pd = master_pd.values
+    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set)
+    master_pd.replace('I/O Timeout', np.nan, inplace=True)
+    master_pd.replace('No Data', np.nan, inplace=True)
+    master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
+    master_pd.replace('Closed', np.nan, inplace=True)
+    master_pd.replace('Open', np.nan, inplace=True)
+    for column_name in master_pd.columns:
+        if column_name != 'Load_Type' and column_name != 'TimeStamp':
+            master_pd[column_name] = pd.to_numeric(master_pd[column_name], downcast='float')
+    master_pd = master_pd.sort_values(by='TimeStamp')
+    master_pd = master_pd.reset_index(drop=True)
+    master_pd = master_pd.fillna(method='ffill')
+    
+    df_sel = master_pd.reset_index(drop=True)
+    df_sel = df_sel[['TimeStamp'] + feature_set] 
+    return df_sel
+
 ############################ Configuration ###############################
 interval_gap = 10 * 60 # Seconds
 
@@ -157,34 +187,3 @@ while True:
     # DONT REMOVE THIS
     df_timestamp_last = df_timestamp[-1]
     time.sleep(interval_gap)
-
-
-def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
-    timerange = AFTimeRange(time_list[0], time_list[1])
-    master_pd = ""
-    for i in range(len(pi_tag)):
-        tag = PIPoint.FindPIPoint(piServer, pi_tag[i])
-        value_resp = parse_recorded_events(tag.InterpolatedValues(timerange, AFTimeSpan.Parse('1m'), '', False))
-        if i == 0:
-            value_resp['Timestamps'] = pd.to_datetime(value_resp['Timestamps'])
-            master_pd = value_resp
-        else:
-            master_pd = pd.concat([master_pd, value_resp['Values']], axis=1, join='inner')
-
-    master_pd = master_pd.values
-    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set)
-    master_pd.replace('I/O Timeout', np.nan, inplace=True)
-    master_pd.replace('No Data', np.nan, inplace=True)
-    master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
-    master_pd.replace('Closed', np.nan, inplace=True)
-    master_pd.replace('Open', np.nan, inplace=True)
-    for column_name in master_pd.columns:
-        if column_name != 'Load_Type' and column_name != 'TimeStamp':
-            master_pd[column_name] = pd.to_numeric(master_pd[column_name], downcast='float')
-    master_pd = master_pd.sort_values(by='TimeStamp')
-    master_pd = master_pd.reset_index(drop=True)
-    master_pd = master_pd.fillna(method='ffill')
-    
-    df_sel = master_pd.reset_index(drop=True)
-    df_sel = df_sel[['TimeStamp'] + feature_set] 
-    return df_sel
