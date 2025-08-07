@@ -141,6 +141,7 @@ else:
 
 ############################ Main Loops  ###############################
 count = 0
+df_timestamp_last = None
 while True:
     valid_measurment = True
     threshold_percentages = {}
