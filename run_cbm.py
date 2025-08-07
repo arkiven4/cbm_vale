@@ -30,7 +30,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 torch.zero_grad = True
 
 import sys
-sys.path.append('./accumulation_tree/accumulation_tree')
+sys.path.append('./accumulation_tree')
 from accumulation_tree import AccumulationTree
 
 def getdf_piserver(piServer, pi_tag, time_list):
