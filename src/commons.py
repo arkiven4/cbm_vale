@@ -259,6 +259,72 @@ def calc_counterPercentage(threshold_percentages, feature_set, model_array, calc
 
     return mean_severity_percentage, counter_feature_plot
 
+def process_shutdown_and_snl_periods(df_selected, column_name):
+    data_timestamp = df_selected[['TimeStamp']].values
+    sensor_datas = df_selected[column_name].values
+
+    activepower_data = sensor_datas[:, 0].astype(float)
+    rpm_data = sensor_datas[:, 1].astype(float)
+
+    shutdown_mask = (activepower_data <= 3) & (rpm_data <= 10)
+    snl_mask = (activepower_data <= 3) & (rpm_data >= 259.35) & (rpm_data <= 286.65)
+
+    def extract_periods(mask):
+        change_points = np.diff(mask.astype(int), prepend=0)
+        start_indices = np.where(change_points == 1)[0]
+        end_indices = np.where(change_points == -1)[0]
+
+        if mask[-1]:
+            end_indices = np.append(end_indices, len(mask))
+        if mask[0]:
+            start_indices = np.insert(start_indices, 0, 0)
+
+        periods = []
+        for start, end in zip(start_indices, end_indices):
+            start_time = data_timestamp[start][0]
+            end_time = data_timestamp[end - 1][0]
+            periods.append((start_time, end_time))
+        return periods
+
+    shutdown_periods = extract_periods(shutdown_mask)
+    snl_periods = extract_periods(snl_mask)
+
+    return shutdown_periods, snl_periods
+
+def compute_oee_metrics(df_selected, column_name, shutdown_periods, snl_periods, performance_formula):
+    data_timestamp = df_selected[['TimeStamp']].values.flatten()
+    sensor_datas = df_selected[column_name].values
+
+    active_power = sensor_datas[:, 0].astype(float)
+
+    nonzeroneg_mask = active_power > 0
+    total_hours = (pd.to_datetime(str(data_timestamp[-1])) - pd.to_datetime(str(data_timestamp[0]))).total_seconds() / 3600
+
+    downtime_hours = sum(
+        (pd.to_datetime(str(end)) - pd.to_datetime(str(start))).total_seconds() / 3600
+        for start, end in shutdown_periods
+    )
+    snl_hours = sum(
+        (pd.to_datetime(str(end)) - pd.to_datetime(str(start))).total_seconds() / 3600
+        for start, end in snl_periods
+    )
+
+    phy_avail = max(round((total_hours - downtime_hours) / total_hours, 2), 0.01)
+    uo_Avail = max(round((total_hours - snl_hours) / total_hours, 2), 0.01)
+
+    if np.any(nonzeroneg_mask):
+        log_mean = np.mean(np.log(active_power[nonzeroneg_mask]))
+        performance = max(round((performance_formula[0] * log_mean + performance_formula[1]) / 100, 2), 0)
+    else:
+        performance = 0.01
+
+    oee = max(round(phy_avail * performance * uo_Avail, 2), 0.01)
+    datetime_nowMidnight = pd.to_datetime(str(data_timestamp[-1])).replace(hour=1, minute=0, second=0)
+
+    return datetime_nowMidnight, oee, phy_avail, performance, uo_Avail
+
+
+
 class OnlinePercentileEstimator:
     def __init__(self):
         self.digest = TDigest()
@@ -270,3 +336,4 @@ class OnlinePercentileEstimator:
     def get_percentile(self, q=99):
         """Estimate the q-th percentile (default 99th)"""
         return self.digest.percentile(q)
+

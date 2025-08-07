@@ -157,12 +157,12 @@ while True:
                     continue
 
                 # Process shutdown & SNL
-                shutdown_periods, snl_periods = process_shutdown_and_snl_periods(
+                shutdown_periods, snl_periods = commons.process_shutdown_and_snl_periods(
                     df_unit, [tags['active_power'], tags['rpm']]
                 )
 
                 # Compute OEE and related KPIs
-                datetime_nowMidnight, oee, phy_avail, performance, uo_Avail = compute_oee_metrics(
+                datetime_nowMidnight, oee, phy_avail, performance, uo_Avail = commons.compute_oee_metrics(
                     df_unit, [tags['active_power'], tags['rpm']],
                     shutdown_periods, snl_periods,
                     performance_formula=tags['coef']
