@@ -135,7 +135,7 @@ while True:
         time_list = [start_time.strftime('%Y-%m-%d %H:%M:%S'), now_time.strftime('%Y-%m-%d %H:%M:%S')]
         
         df_selkpi = getdf_piserverKPI(piServer, [v for k,v in custom_const.feature_tag_mappingKPI.items()], 
-                                      time_list_KPI, [k for k,v in custom_const.feature_tag_mappingKPI.items()])
+                                      time_list, [k for k,v in custom_const.feature_tag_mappingKPI.items()])
         for value in plant_metadata.values():
             for tags in value:
                 unit_name = tags['name']
