@@ -181,10 +181,10 @@ while True:
                 value_toupdate = np.concatenate(loss_accumulative[model_now][feat_index], axis=0)
                 tdigest_models[model_now][feat_index].update(value_toupdate)
                 loss_accumulative[model_now][feat_index] = []
-        with open(f'loss_fold/{args.dataset}/{model_now}_tdigest_run.pickle', 'wb') as handle:
+        with open(f'mini_loss_fold/{args.dataset}/{model_now}_tdigest_run.pickle', 'wb') as handle:
             pickle.dump(tdigest_models[model_now], handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    with open(f'loss_fold/loss_accumulative.pickle', 'wb') as handle:
+    with open(f'mini_loss_fold/loss_accumulative.pickle', 'wb') as handle:
         pickle.dump(loss_accumulative, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # DONT REMOVE THIS
