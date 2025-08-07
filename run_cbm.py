@@ -33,6 +33,16 @@ import sys
 sys.path.append('./accumulation_tree')
 from accumulation_tree import AccumulationTree
 
+def parse_recorded_events(recorded):
+    parsed_events = []
+    for event in recorded:
+        timestamp_str = str(event.Timestamp.LocalTime)  # Convert .NET DateTime to string
+        timestamp = pd.to_datetime(timestamp_str)  # Convert to pandas Timestamp
+        value = event.Value
+        parsed_events.append((timestamp, value))
+    return pd.DataFrame(parsed_events, columns=['Timestamps', 'Values'])
+
+
 def getdf_piserver(piServer, pi_tag, time_list):
     timerange = AFTimeRange(time_list[0], time_list[1])
     master_pd = ""
