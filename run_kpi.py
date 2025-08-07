@@ -1,19 +1,4 @@
-from OSIsoft.AF.Time import *
-from OSIsoft.AF.Data import *
-from OSIsoft.AF.Asset import *
-from OSIsoft.AF.Search import *
-from OSIsoft.AF import *
-import warnings
-from OSIsoft.AF.UnitsOfMeasure import *
-from OSIsoft.AF.PI import *
-import os
-import pickle
-import sqlite3
-import copy
-import time
-import sklearn
-import sys
-import clr
+import os, pickle, sqlite3, copy, time, sklearn, sys, clr
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -24,10 +9,18 @@ import src.commons as commons
 import src.custom_const as custom_const
 from src.commons import OnlinePercentileEstimator
 
-sys.path.append(r'C:\Program Files (x86)\PIPC\AF\PublicAssemblies\4.0')
+sys.path.append(r'C:\Program Files (x86)\PIPC\AF\PublicAssemblies\4.0')  
 clr.AddReference('OSIsoft.AFSDK')
 
+from OSIsoft.AF import *  
+from OSIsoft.AF.PI import *
+from OSIsoft.AF.Search import * 
+from OSIsoft.AF.Asset import *  
+from OSIsoft.AF.Data import *  
+from OSIsoft.AF.Time import *  
+from OSIsoft.AF.UnitsOfMeasure import *
 
+import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
