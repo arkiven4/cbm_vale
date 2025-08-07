@@ -80,22 +80,18 @@ plant_metadata = {
 }
 
 ############################ Setup ###############################
-commons.init_db_timeconst(feature_set, "db/original_data.db", "original_data")
-commons.init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
-commons.init_db_timeconst(feature_set, "db/severity_trendings.db", "severity_trendings")
-commons.init_db_timeconst(feature_set, "db/severity_trendings.db", "original_sensor")
-for model_name in model_array:
-    commons.init_db_timeconst(feature_set, "db/pred_data.db", model_name)
-    commons.init_db_timeconst(feature_set, "db/threshold_data.db", model_name)
-    commons.init_db_timeconst(feature_set, "db/adaptive_tdigest.db", model_name)
+for value in plant_metadata.values():
+    for value2 in value:
+        commons.init_db_timeconst(['oee', 'phy_avail', 'performance', 'uo_Avail', "aux_0", "aux_1"], "db/kpi.db", value2['name'])
+commons.init_db_timeconst(['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'], "db/kpi.db", "PowerProd")
 
-############################ Connect PI Server ###############################
+############################ Connect PI Server ####################
 piServers = PIServers()
 piServer = piServers["PTI-PI"]
 piServer.Connect(False) 
 print ('Connected to server: ' + "PTI-PI")
 
-############################ Main Loops  ###############################
+############################ Main Loops  ##########################
 count = 0
 last_execution_date_kpi = None
 while True:
