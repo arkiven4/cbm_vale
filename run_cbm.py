@@ -161,7 +161,7 @@ while True:
     testD, testO, df_timestamp, df_feature = commons.preprocessPD_loadData(df_sel, feature_set, min_a, max_a)
     for feat_index, feature_now in enumerate(feature_set):
         if (df_feature[feature_set] == 0).any().any():
-            valid_measurement = False
+            valid_measurment = False
 
     temploss_models = {model_now: None for model_now in model_array}
     for model_now in model_array:
@@ -178,7 +178,7 @@ while True:
         threshold_percentages[model_now] = commons.calcThres_oneModel(feature_set, loss, tdigest_models[model_now])
 
     counter_feature_trd, _ = commons.calc_counterPercentage(threshold_percentages, feature_set, model_array)
-    if valid_measurement and bad_pct == 0.0:
+    if valid_measurment and bad_pct == 0.0:
         for feat_index, feature_now in enumerate(feature_set):
             if counter_feature_trd[feature_now]['percentage'] <= 1.0 and counter_feature_trd[feature_now]['count'] == 0:
                 for model_now in model_array:
