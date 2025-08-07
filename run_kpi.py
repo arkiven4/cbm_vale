@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from datetime import datetime, timedelta
-from torch.utils.data import Dataset, DataLoader, TensorDataset
 from scipy.signal import resample
 
 import src.commons as commons
@@ -24,7 +23,6 @@ from OSIsoft.AF.UnitsOfMeasure import *
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
-torch.zero_grad = True
 
 ############################ Configuration ###############################
 interval_gap = 10 * 60 # Seconds
