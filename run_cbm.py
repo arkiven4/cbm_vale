@@ -219,7 +219,7 @@ while True:
     trend_data = np.array([counter_feature_trd[key]['percentage'] for key in counter_feature_trd]).astype(np.float64)
 
     commons.batch_timeseries_savedb(df_timestamp, commons.trunc(df_feature, decs=2), feature_set, "db/original_data.db", "original_data")
-    commons.batch_timeseries_savedb(df_timestamp, trunc(df_additional, decs=2), ['Grid Selection'], "db/original_data.db", "additional_original_data")
+    commons.batch_timeseries_savedb(df_timestamp, commons.trunc(df_additional, decs=2), ['Grid Selection'], "db/original_data.db", "additional_original_data")
     commons.timeseries_savedb(df_timestampi, trend_data, feature_set, "db/severity_trendings.db", "severity_trendings")
     commons.timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor")
     for idx_model, (model_name) in enumerate(model_array):
