@@ -207,12 +207,20 @@ def getdf_piserver(piServer, pi_tag, time_list):
 
     master_pd = master_pd.values
     master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set + ['Grid Selection'])
+    master_pd.replace('I/O Timeout', np.nan, inplace=True)
+    master_pd.replace('No Data', np.nan, inplace=True)
+    master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
+    master_pd.replace('Closed', np.nan, inplace=True)
+    master_pd.replace('Open', np.nan, inplace=True)
+    for column_name in master_pd.columns:
+        if column_name != 'Load_Type' and column_name != 'TimeStamp':
+            master_pd[column_name] = pd.to_numeric(master_pd[column_name], downcast='float')
+    master_pd = master_pd.sort_values(by='TimeStamp')
+    master_pd = master_pd.reset_index(drop=True)
+    master_pd = master_pd.fillna(method='ffill')
+
     df_sel = master_pd.iloc[-120:, :]
     df_sel = df_sel.reset_index(drop=True)
-
-    for column_name in df_sel.columns:
-        if column_name != 'Load_Type' and column_name != 'TimeStamp':
-            df_sel[column_name] = pd.to_numeric(df_sel[column_name], downcast='float')
     
     df_additional = df_sel[['Grid Selection']].copy()
     df_additional = df_additional.astype(float)
