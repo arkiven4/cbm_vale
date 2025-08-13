@@ -234,7 +234,7 @@ while True:
 
                     # Count Auxiliary Grid ON/OFF
                     aux_0, aux_1 = 0, 0
-                    counts_aux = df_unit[tags['aux']].values
+                    counts_aux = df_unit[tags['aux']]
                     binary_vals = (vals >= 0.5).astype(int)
                     if binary_vals == 1:
                         aux_1 = 1
