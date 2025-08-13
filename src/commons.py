@@ -5,8 +5,6 @@ import pandas as pd
 import numpy as np
 from torch.utils.data import DataLoader
 from datetime import datetime, timedelta
-
-import src.models as models
  
 def label_load(row):
    if row['Active Power'] < 1 and row['Governor speed actual'] < 1:
@@ -134,6 +132,7 @@ def convert_to_windows(data, model):
     return torch.stack(windows)
 
 def load_model(dataset, modelname, dims, retrainMode=False, testMode=False):
+    import src.models as models
     model_class = getattr(models, modelname)
     model = model_class(dims).double()
     fname = f'checkpoints/{model.name}_{dataset}/model.ckpt'

@@ -65,6 +65,7 @@ def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
     master_pd = master_pd.sort_values(by='TimeStamp')
     master_pd = master_pd.reset_index(drop=True)
     master_pd = master_pd.fillna(method='ffill')
+    master_pd['Total Karebbe Power Daily (Tot)'] = master_pd['Total Balambano Power Daily (Tot)'] # Temp Fix
 
     df_sel = master_pd.reset_index(drop=True)
     df_sel = df_sel[['TimeStamp'] + feature_set]
@@ -129,10 +130,10 @@ plant_metadata = {
 ############################ Setup ###############################
 for value in plant_metadata.values():
     for value2 in value:
-        commons.init_db_timeconst(['oee', 'phy_avail', 'performance',
-                                  'uo_Avail', "aux_0", "aux_1"], "db/kpi.db", value2['name'])
-commons.init_db_timeconst(
-    ['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'], "db/kpi.db", "PowerProd")
+        commons.init_db_timeconst(['oee', 'phy_avail', 'performance', 'uo_Avail', "aux_0", "aux_1"], "db/kpi.db", value2['name'])
+        commons.init_db_timeconst(['active_power', 'rpm', "aux_0", "aux_1"], "db/kpi.db", value2['name'] + "_timeline")
+
+commons.init_db_timeconst(['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'], "db/kpi.db", "PowerProd")
 
 ############################ Connect PI Server ####################
 piServers = PIServers()
@@ -207,6 +208,44 @@ while True:
             "PowerProd"
         )
 
+        vals = df_selkpi.values
+        trim_len = (len(vals) // 15) * 15
+        vals_trimmed = vals[:trim_len]
+        means = vals_trimmed.reshape(-1, 15, vals.shape[1]).mean(axis=1)
+        idx_15 = df_selkpi.index[::15][:means.shape[0]]
+        df_selkpi_15min = pd.DataFrame(means, index=idx_15, columns=df_selkpi.columns)
+        for ts, row in df_selkpi_15min.iterrows():
+            for value in plant_metadata.values():
+                for tags in value:
+                    unit_name = tags['name']
+                    if tags['active_power'] not in row.columns or tags['rpm'] not in row.columns:
+                        continue
+
+                    df_unit = row[['TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
+                    if df_unit.empty:
+                        continue
+                    
+                    data_timestamp = df_unit[['TimeStamp']].values.flatten()
+                    datetime_now = pd.to_datetime(str(data_timestamp[-1]))
+                    sensor_datas = df_unit[[tags['active_power'], tags['rpm']]].values
+
+                    activepower_data = sensor_datas[-1, 0].astype(float)
+                    rpm_data = sensor_datas[-1, 1].astype(float)
+
+                    # Count Auxiliary Grid ON/OFF
+                    counts_aux = df_unit[tags['aux']].value_counts().sort_index()
+                    aux_0 = counts_aux.get(0.0, 0)
+                    aux_1 = counts_aux.get(1.0, 0)
+
+                    # Save to database
+                    commons.timeseries_savedb(
+                        datetime_now,
+                        np.array([activepower_data, rpm_data, aux_0, aux_1]),
+                        ['active_power', 'rpm', "aux_0", "aux_1"],
+                        "db/kpi.db",
+                        unit_name + "_timeline"
+                    )
+                    
         # DONT REMOVE THIS
         last_execution_date_kpi = today
 
