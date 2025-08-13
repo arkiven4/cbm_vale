@@ -218,7 +218,7 @@ while True:
             for value in plant_metadata.values():
                 for tags in value:
                     unit_name = tags['name']
-                    if tags['active_power'] not in row.columns or tags['rpm'] not in row.columns:
+                    if tags['active_power'] not in df_selkpi_15min.columns or tags['rpm'] not in df_selkpi_15min.columns:
                         continue
 
                     df_unit = row[['TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
