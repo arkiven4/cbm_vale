@@ -208,12 +208,12 @@ while True:
             "PowerProd"
         )
 
-        vals = df_selkpi.values
+        vals = df_selkpi.select_dtypes(include=np.number).values  # numeric data only
         trim_len = (len(vals) // 15) * 15
         vals_trimmed = vals[:trim_len]
         means = vals_trimmed.reshape(-1, 15, vals.shape[1]).mean(axis=1)
         idx_15 = df_selkpi.index[::15][:means.shape[0]]
-        df_selkpi_15min = pd.DataFrame(means, index=idx_15, columns=df_selkpi.columns)
+        df_selkpi_15min = pd.DataFrame(means, index=idx_15, columns=df_selkpi.select_dtypes(include=np.number).columns)
         for ts, row in df_selkpi_15min.iterrows():
             for value in plant_metadata.values():
                 for tags in value:
