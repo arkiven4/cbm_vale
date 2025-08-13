@@ -229,8 +229,8 @@ while True:
                     datetime_now = pd.to_datetime(str(data_timestamp[-1]))
                     sensor_datas = df_unit[[tags['active_power'], tags['rpm']]].values
 
-                    activepower_data = sensor_datas[-1, 0].astype(float)
-                    rpm_data = sensor_datas[-1, 1].astype(float)
+                    activepower_data = sensor_datas[0].astype(float)
+                    rpm_data = sensor_datas[1].astype(float)
 
                     # Count Auxiliary Grid ON/OFF
                     counts_aux = df_unit[tags['aux']].value_counts().sort_index()
