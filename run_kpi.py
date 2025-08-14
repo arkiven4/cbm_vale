@@ -51,17 +51,16 @@ def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
                 [master_pd, value_resp['Values']], axis=1, join='inner')
 
     master_pd = master_pd.values
-    master_pd = pd.DataFrame(data=master_pd, columns=[
-                             'TimeStamp'] + feature_set)
-    master_pd.replace('I/O Timeout', np.nan, inplace=True)
-    master_pd.replace('No Data', np.nan, inplace=True)
-    master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
-    master_pd.replace('Closed', np.nan, inplace=True)
-    master_pd.replace('Open', np.nan, inplace=True)
+    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set)
+    # master_pd.replace('I/O Timeout', np.nan, inplace=True)
+    # master_pd.replace('No Data', np.nan, inplace=True)
+    # master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
+    # master_pd.replace('Closed', np.nan, inplace=True)
+    # master_pd.replace('Open', np.nan, inplace=True)
     for column_name in master_pd.columns:
         if column_name != 'Load_Type' and column_name != 'TimeStamp':
             master_pd[column_name] = pd.to_numeric(
-                master_pd[column_name], downcast='float')
+                master_pd[column_name], errors='coerce', downcast='float')
     master_pd = master_pd.sort_values(by='TimeStamp')
     master_pd = master_pd.reset_index(drop=True)
     master_pd = master_pd.fillna(method='ffill')
@@ -235,7 +234,7 @@ while True:
                     # Count Auxiliary Grid ON/OFF
                     aux_0, aux_1 = 0, 0
                     counts_aux = df_unit[tags['aux']]
-                    binary_vals = (vals >= 0.5).astype(int)
+                    binary_vals = (counts_aux >= 0.5)
                     if binary_vals == 1:
                         aux_1 = 1
 
