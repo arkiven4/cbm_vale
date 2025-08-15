@@ -24,6 +24,40 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
+def timeseries_savedb_many(records, db_name="data.db", table_name="sensor_data"):
+    """
+    records: list of tuples in format:
+        (datetime_obj, data_array, feature_set_list)
+    db_name: SQLite database path
+    table_name: table to insert into
+
+    The table must have UNIQUE(timestamp) for REPLACE to work.
+    """
+    if not records:
+        return
+
+    # All records should have the same feature set
+    feature_set = records[0][2]
+    feature_columns = ', '.join([f.replace(" ", "_") for f in feature_set])
+    placeholders = ', '.join(['?' for _ in range(len(feature_set))])
+
+    sql = f"""
+        INSERT OR REPLACE INTO {table_name} (timestamp, {feature_columns})
+        VALUES (?, {placeholders})
+    """
+
+    # Prepare all values for executemany
+    values = []
+    for ts, data, _ in records:
+        ts_str = ts
+        values.append((ts_str, *data))
+
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.executemany(sql, values)
+    conn.commit()
+    conn.close()
+
 def parse_recorded_events(recorded):
     parsed_events = []
     for event in recorded:
@@ -213,39 +247,39 @@ while True:
         means = vals.reshape(-1, 15, vals.shape[1]).mean(axis=1)
         df_selkpi_15min = pd.DataFrame(means, columns=df_selkpi.select_dtypes(include=np.number).columns)
         df_selkpi_15min['TimeStamp'] = timestamps
-        for ts, row in df_selkpi_15min.iterrows():
-            for value in plant_metadata.values():
-                for tags in value:
-                    unit_name = tags['name']
-                    if tags['active_power'] not in df_selkpi_15min.columns or tags['rpm'] not in df_selkpi_15min.columns:
-                        continue
 
-                    df_unit = row[['TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
-                    if df_unit.empty:
-                        continue
-                    
-                    data_timestamp = df_unit[['TimeStamp']].values.flatten()
-                    datetime_now = pd.to_datetime(str(data_timestamp[-1]))
-                    sensor_datas = df_unit[[tags['active_power'], tags['rpm']]].values
+        for value in plant_metadata.values():
+            for tags in value:
+                unit_name = tags['name']
 
-                    activepower_data = sensor_datas[0]
-                    rpm_data = sensor_datas[1]
+                # skip if required columns missing
+                required_cols = [tags['active_power'], tags['rpm'], tags['aux']]
+                if not all(c in df_selkpi_15min.columns for c in required_cols):
+                    continue
 
-                    # Count Auxiliary Grid ON/OFF
-                    aux_0, aux_1 = 0, 0
-                    counts_aux = df_unit[tags['aux']]
-                    binary_vals = (counts_aux >= 0.5)
-                    if binary_vals == 1:
-                        aux_1 = 1
+                df_unit = df_selkpi_15min[['TimeStamp'] + required_cols].fillna(0)
 
-                    # Save to database
-                    commons.timeseries_savedb(
-                        datetime_now,
-                        np.array([activepower_data, rpm_data, aux_0, aux_1]),
-                        ['active_power', 'rpm', "aux_0", "aux_1"],
-                        "db/kpi.db",
-                        unit_name + "_timeline"
-                    )
+                # process all rows at once
+                binary_vals = (df_unit[tags['aux']] >= 0.5).astype(int)
+                aux_0 = (binary_vals == 0).astype(int)
+                aux_1 = (binary_vals == 1).astype(int)
+
+                # stack TimeStamp, active_power, rpm, aux_0, aux_1 into 2D array
+                unit_records = np.column_stack([
+                    df_unit['TimeStamp'].astype(str).values,
+                    df_unit[tags['active_power']].values,
+                    df_unit[tags['rpm']].values,
+                    aux_0.values,
+                    aux_1.values
+                ])
+
+                # prepare records to insert for this unit only
+                records_to_insert = [
+                    (r[0], np.array(r[1:], dtype=float), ['active_power', 'rpm', 'aux_0', 'aux_1'])
+                    for r in unit_records
+                ]
+
+                timeseries_savedb_many(records_to_insert, db_name="db/kpi.db", table_name=unit_name + "_timeline")
                     
         # DONT REMOVE THIS
         last_execution_date_kpi = today
