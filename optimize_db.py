@@ -26,3 +26,4 @@ for filename in os.listdir(folder):
                     print(f"  Failed on {table}: {e}")
         conn.commit()
         conn.close()
+        
