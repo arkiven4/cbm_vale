@@ -240,23 +240,23 @@ while True:
         power_prod_df = pd.concat(power_prod_df, ignore_index=True)
         power_prod_df["TimeStamp"] = pd.to_datetime(power_prod_df["TimeStamp"])
         hourly = (
-            power_prod_df.set_index("Timestamp")
+            power_prod_df.set_index("TimeStamp")
                 .groupby("Unit")["Active Power"]
                 .resample("H").mean()
                 .reset_index()
         )
         daily = (
-            hourly.set_index("Timestamp")
+            hourly.set_index("TimeStamp")
                 .groupby("Unit")["Active Power"]
                 .resample("D").sum()
                 .reset_index()
         )
         daily["Group"] = daily["Unit"].str[0]
         final = (
-            daily.groupby(["Group","Timestamp"])["Active Power"]
+            daily.groupby(["Group","TimeStamp"])["Active Power"]
                 .sum()
                 .reset_index()
-                .pivot(index="Timestamp", columns="Group", values="Active Power")
+                .pivot(index="TimeStamp", columns="Group", values="Active Power")
                 .reset_index()
         )
         final.columns.name = None
