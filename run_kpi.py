@@ -263,8 +263,7 @@ while True:
         final.columns = ["Date", "LGS", "BGS", "KGS"] # Total, AVG
         final["Total Hydro Power"] = final[["LGS","BGS","KGS"]].sum(axis=1)
         final["Avg Hydro Power"] = final[["LGS","BGS","KGS"]].mean(axis=1)
-
-        print(final)
+        
         pda_datas = final.values[-1]
         commons.timeseries_savedb(
             datetime_nowMidnight,
