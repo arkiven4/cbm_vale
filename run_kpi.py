@@ -135,28 +135,28 @@ plant_metadata = {
         'active_power': 'BGS1 Power',
         'rpm': 'GEN SPEED BGS1',
         'aux': 'BGS1-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [20.944, 11.398]
+        'coef': [0.17, 0.07]
     },
         {
         'name': "BGS2",
         'active_power': 'BGS2 Power',
         'rpm': 'GEN SPEED BGS2',
         'aux': 'BGS2-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [21.162, 8.49]
+        'coef': [00.21, 0.01]
     }],
     'Karebbe': [{
         'name': "KGS1",
         'active_power': 'K U1 Active Power (MW)',
         'rpm': 'K U1 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS1-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [20.944, 11.398]
+        'coef': [19.64, 11.05]
     },
         {
         'name': "KGS2",
         'active_power': 'K U2 Active Power (MW)',
         'rpm': 'K U2 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS2-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [21.162, 8.49]
+        'coef': [19.64, 11.05]
     }]
 }
 
@@ -191,6 +191,7 @@ while True:
 
         df_selkpi = getdf_piserverKPI(piServer, [v for k, v in custom_const.feature_tag_mappingKPI.items()],
                                       time_list, [k for k, v in custom_const.feature_tag_mappingKPI.items()])
+        power_prod_df = []
         for value in plant_metadata.values():
             for tags in value:
                 unit_name = tags['name']
@@ -201,6 +202,12 @@ while True:
                     'TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
                 if df_unit.empty:
                     continue
+                
+                df_unit_powerprod = df_unit.copy()
+                df_unit_powerprod = df_unit_powerprod.drop([tags['rpm'], tags['aux']], axis=1)
+                df_unit_powerprod = df_unit_powerprod.rename(columns={tags['active_power']: "Active Power"})
+                df_unit_powerprod["Unit"] = unit_name
+                power_prod_df.append(df_unit_powerprod)
 
                 # Process shutdown & SNL
                 shutdown_periods, snl_periods = commons.process_shutdown_and_snl_periods(
@@ -230,12 +237,38 @@ while True:
                     unit_name
                 )
 
-        pda_datas = df_selkpi[['Total Hydro Power Daily (Tot)', 'Avg Hydro Power Available 1D (Avg)', 'Total Larona Power Daily (Tot)',
-                               'Total Balambano Power Daily (Tot)', 'Total Karebbe Power Daily (Tot)']].mean().values
+        power_prod_df = pd.concat(power_prod_df, ignore_index=True)
+        power_prod_df["TimeStamp"] = pd.to_datetime(power_prod_df["TimeStamp"])
+        hourly = (
+            power_prod_df.set_index("Timestamp")
+                .groupby("Unit")["Active Power"]
+                .resample("H").mean()
+                .reset_index()
+        )
+        daily = (
+            hourly.set_index("Timestamp")
+                .groupby("Unit")["Active Power"]
+                .resample("D").sum()
+                .reset_index()
+        )
+        daily["Group"] = daily["Unit"].str[0]
+        final = (
+            daily.groupby(["Group","Timestamp"])["Active Power"]
+                .sum()
+                .reset_index()
+                .pivot(index="Timestamp", columns="Group", values="Active Power")
+                .reset_index()
+        )
+        final.columns.name = None
+        final.columns = ["Date", "LGS", "BGS", "KGS"] # Total, AVG
+        final["Total Hydro Power"] = final[["LGS","BGS","KGS"]].sum(axis=1)
+        final["Avg Hydro Power"] = final[["LGS","BGS","KGS"]].mean(axis=1)
+
+        pda_datas = final.values
         commons.timeseries_savedb(
             datetime_nowMidnight,
-            np.array([pda_datas[0], pda_datas[1], pda_datas[2],
-                     pda_datas[3], pda_datas[3]]).astype(np.float64),
+            np.array([pda_datas[4], pda_datas[5], pda_datas[1],
+                     pda_datas[2], pda_datas[3]]).astype(np.float64),
             ['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'],
             "db/kpi.db",
             "PowerProd"
