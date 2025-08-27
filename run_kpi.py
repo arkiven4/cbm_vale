@@ -179,7 +179,7 @@ count = 0
 last_execution_date_kpi = None
 while True:
     now_time = datetime.utcnow()
-    if now_time.hour >= 1 or (last_execution_date_kpi is None or last_execution_date_kpi < now_time.date()):
+    if (last_execution_date_kpi != now_time.date() and now_time.hour >= 1):
         count = count + 1
         print(
             f"[{datetime.now().strftime('%H:%M:%S')}] Executing KPI Task #{count}...")
