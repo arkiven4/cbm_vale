@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from torch.utils.data import DataLoader
 from datetime import datetime, timedelta
+from tdigest import TDigest
  
 def label_load(row):
    if row['Active Power'] < 1 and row['Governor speed actual'] < 1:
