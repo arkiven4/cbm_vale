@@ -7,7 +7,6 @@ from scipy.signal import resample
 
 import src.commons as commons
 import src.custom_const as custom_const
-from src.commons import OnlinePercentileEstimator
 
 sys.path.append(r'C:\Program Files (x86)\PIPC\AF\PublicAssemblies\4.0')  
 clr.AddReference('OSIsoft.AFSDK')
