@@ -11,6 +11,7 @@ from src.utils import *
 from main import  load_dataset, backprop
 import src.commons as commons
 import src.custom_const as custom_const
+from src.commons import OnlinePercentileEstimator
 
 sys.path.append(r'C:\Program Files (x86)\PIPC\AF\PublicAssemblies\4.0')  
 clr.AddReference('OSIsoft.AFSDK')
@@ -31,19 +32,6 @@ torch.zero_grad = True
 import sys
 sys.path.append('./accumulation_tree')
 from accumulation_tree import AccumulationTree
-from tdigest import TDigest
-
-class OnlinePercentileEstimator:
-    def __init__(self):
-        self.digest = TDigest()
-
-    def update(self, value):
-        """Add new data point"""
-        self.digest.batch_update(value)
-
-    def get_percentile(self, q=99):
-        """Estimate the q-th percentile (default 99th)"""
-        return self.digest.percentile(q)
 
 def parse_recorded_events(recorded):
     parsed_events = []
