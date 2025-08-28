@@ -1,3 +1,8 @@
+import sys
+sys.path.extend(['./accumulation_tree', './tdigest'])
+from accumulation_tree import AccumulationTree
+from tdigest import TDigest
+
 import os, pickle, sqlite3, copy, time, sklearn, sys, clr
 import pandas as pd
 import numpy as np
@@ -11,6 +16,7 @@ from src.utils import *
 from main import  load_dataset, backprop
 import src.commons as commons
 import src.custom_const as custom_const
+from src.commons import OnlinePercentileEstimator
 
 sys.path.append(r'C:\Program Files (x86)\PIPC\AF\PublicAssemblies\4.0')  
 clr.AddReference('OSIsoft.AFSDK')
@@ -27,12 +33,6 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 torch.zero_grad = True
-
-import sys
-sys.path.extend(['./accumulation_tree', './tdigest'])
-from accumulation_tree import AccumulationTree
-from tdigest import TDigest
-from src.commons import OnlinePercentileEstimator
 
 def parse_recorded_events(recorded):
     parsed_events = []
