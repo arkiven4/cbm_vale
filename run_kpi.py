@@ -135,14 +135,14 @@ plant_metadata = {
         'active_power': 'BGS1 Power',
         'rpm': 'GEN SPEED BGS1',
         'aux': 'BGS1-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [0.17, 0.07]
+        'coef': [17.44, 6.87]
     },
         {
         'name': "BGS2",
         'active_power': 'BGS2 Power',
         'rpm': 'GEN SPEED BGS2',
         'aux': 'BGS2-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [00.21, 0.01]
+        'coef': [21.11, -1.25]
     }],
     'Karebbe': [{
         'name': "KGS1",
@@ -156,7 +156,7 @@ plant_metadata = {
         'active_power': 'K U2 Active Power (MW)',
         'rpm': 'K U2 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS2-Auxiliary Grid (0 = ACTIVE)',
-        'coef': [19.64, 11.05]
+        'coef': [16.84, 23.41]
     }]
 }
 
