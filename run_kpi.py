@@ -1,3 +1,8 @@
+import sys
+sys.path.extend(['./accumulation_tree', './tdigest'])
+from accumulation_tree import AccumulationTree
+from tdigest import TDigest
+
 import os, pickle, sqlite3, copy, time, sklearn, sys, clr
 import pandas as pd
 import numpy as np
