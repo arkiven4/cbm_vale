@@ -321,16 +321,3 @@ def compute_oee_metrics(df_selected, column_name, shutdown_periods, snl_periods,
     datetime_nowMidnight = pd.to_datetime(str(data_timestamp[-1])).replace(hour=1, minute=0, second=0)
 
     return datetime_nowMidnight, oee, phy_avail, performance, uo_Avail
-
-from tdigest import TDigest
-class OnlinePercentileEstimator:
-    def __init__(self):
-        self.digest = TDigest()
-
-    def update(self, value):
-        """Add new data point"""
-        self.digest.batch_update(value)
-
-    def get_percentile(self, q=99):
-        """Estimate the q-th percentile (default 99th)"""
-        return self.digest.percentile(q)
