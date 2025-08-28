@@ -322,8 +322,7 @@ def compute_oee_metrics(df_selected, column_name, shutdown_periods, snl_periods,
 
     return datetime_nowMidnight, oee, phy_avail, performance, uo_Avail
 
-import sys
-sys.path.append('../tdigest/tdigest')
+
 from tdigest import TDigest
 class OnlinePercentileEstimator:
     def __init__(self):

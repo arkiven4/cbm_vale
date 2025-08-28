@@ -30,8 +30,9 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 torch.zero_grad = True
 
 import sys
-sys.path.append('./accumulation_tree')
+sys.path.extend(['./accumulation_tree', './tdigest'])
 from accumulation_tree import AccumulationTree
+from tdigest import TDigest
 
 def parse_recorded_events(recorded):
     parsed_events = []
