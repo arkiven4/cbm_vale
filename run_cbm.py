@@ -33,9 +33,6 @@ import sys
 sys.path.append('./accumulation_tree')
 from accumulation_tree import AccumulationTree
 
-sys.path.append('./tdigest')
-from tdigest import TDigest
-
 def parse_recorded_events(recorded):
     parsed_events = []
     for event in recorded:
