@@ -101,6 +101,7 @@ def getdf_piserverKPI(piServer, pi_tag, time_list, feature_set):
                 master_pd[column_name], errors='coerce', downcast='float')
     master_pd = master_pd.sort_values(by='TimeStamp')
     master_pd = master_pd.reset_index(drop=True)
+    master_pd = master_pd.mask(master_pd < 0).fillna(method='ffill')
     master_pd = master_pd.fillna(method='ffill')
     master_pd['Total Karebbe Power Daily (Tot)'] = master_pd['Total Balambano Power Daily (Tot)'] # Temp Fix
 
