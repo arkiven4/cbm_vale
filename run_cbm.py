@@ -135,8 +135,11 @@ for model_now in model_array:
 
 loss_accumulative_path = "mini_loss_fold/loss_accumulative.pickle"
 if os.path.exists(loss_accumulative_path):
-    with open(loss_accumulative_path, 'rb') as handle:
-        loss_accumulative = pickle.load(handle)
+    try:
+        with open(loss_accumulative_path, 'rb') as handle:
+            loss_accumulative = pickle.load(handle)
+    except:
+        loss_accumulative = {model_now: [[] for _ in feature_set] for model_now in model_array}
 else:
     loss_accumulative = {model_now: [[] for _ in feature_set] for model_now in model_array}
 
