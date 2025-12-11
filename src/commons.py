@@ -275,6 +275,43 @@ def calc_counterPercentage(threshold_percentages, feature_set, model_array, calc
 
     return mean_severity_percentage, counter_feature_plot
 
+def build_unit_df(df_selkpi, tags):
+    """
+    Produces a unified dataframe with an auto-generated CB signal
+    when tags['cb'] is empty. Shutdown rule:
+        (active_power <= 3) and (rpm <= 10)  → cb = 1
+    """
+
+    ap_col  = tags['active_power']
+    rpm_col = tags['rpm']
+    cb_col  = tags.get('cb', None)
+    aux_col = tags['aux']
+
+    # Base frame
+    cols = ['TimeStamp', ap_col, rpm_col]
+    if cb_col:  # only include if available
+        cols.append(cb_col)
+    cols.append(aux_col)
+
+    df_unit = df_selkpi[cols].copy()
+
+    # Compute shutdown mask
+    shutdown_mask = (df_unit[ap_col] <= 3) & (df_unit[rpm_col] <= 10)
+
+    # Build cb_filled
+    if not cb_col:  
+        # No CB tag exists → use fallback logic
+        df_unit['cb'] = shutdown_mask.astype(int)
+    else:
+        # Use CB if available; fill missing entries using fallback
+        df_unit['cb'] = df_unit[cb_col].fillna(shutdown_mask.astype(int))
+
+    # Final standardized structure
+    df_final = df_unit[['TimeStamp', ap_col, rpm_col, 'cb', aux_col]].dropna()
+
+    return df_final
+
+
 def process_shutdown_and_snl_periods(df_selected, column_name):
     data_timestamp = df_selected[['TimeStamp']].values
     sensor_datas = df_selected[column_name].values

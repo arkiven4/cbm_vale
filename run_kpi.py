@@ -212,16 +212,15 @@ while True:
                 unit_name = tags['name']
                 if tags['active_power'] not in df_selkpi.columns or tags['rpm'] not in df_selkpi.columns:
                     continue
-
-                df_unit = df_selkpi[[
-                    'TimeStamp', tags['active_power'], tags['rpm'], tags['cb'], tags['aux']]].dropna()
+                
+                df_unit = commons.build_unit_df(df_selkpi, tags)
+                #df_unit = df_selkpi[['TimeStamp', tags['active_power'], tags['rpm'], tags['cb'], tags['aux']]].dropna()
                 if df_unit.empty:
                     continue
                 
                 df_unit_powerprod = df_unit.copy()
                 df_unit_powerprod = df_unit_powerprod.drop([tags['rpm'], tags['cb'], tags['aux']], axis=1)
                 df_unit_powerprod = df_unit_powerprod.rename(columns={tags['active_power']: "Active Power"})
-                print(df_unit_powerprod.head())
                 df_unit_powerprod["Unit"] = unit_name
                 power_prod_df.append(df_unit_powerprod)
 
