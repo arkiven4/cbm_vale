@@ -219,7 +219,7 @@ while True:
                     continue
                 
                 df_unit_powerprod = df_unit.copy()
-                df_unit_powerprod = df_unit_powerprod.drop([tags['rpm'], tags['aux']], axis=1)
+                df_unit_powerprod = df_unit_powerprod.drop([tags['rpm'], tags['cb'], tags['aux']], axis=1)
                 df_unit_powerprod = df_unit_powerprod.rename(columns={tags['active_power']: "Active Power"})
                 df_unit_powerprod["Unit"] = unit_name
                 power_prod_df.append(df_unit_powerprod)
