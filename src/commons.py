@@ -39,15 +39,32 @@ def trunc(values, decs=0):
 def init_db_timeconst(feature_set, db_name="masters_data.db", table_name="severity_trending"):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    
-    # Create table if it does not exist
-    columns = ", ".join([feature_name.replace(" ", "_") for feature_name in feature_set])
+
+    # ------------------------------------------------------------------
+    # 1. CREATE TABLE IF NOT EXISTS (minimal schema)
+    # ------------------------------------------------------------------
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            {columns})
+            timestamp TEXT
+        )
     """)
+
+    # ------------------------------------------------------------------
+    # 2. INTROSPECT EXISTING COLUMNS
+    # ------------------------------------------------------------------
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+
+    # Standardize names
+    normalized_cols = [f.replace(" ", "_") for f in feature_set]
+
+    # ------------------------------------------------------------------
+    # 3. ADD MISSING COLUMNS
+    # ------------------------------------------------------------------
+    for col in normalized_cols:
+        if col not in existing_cols:
+            cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {col} REAL")
 
     conn.commit()
     conn.close()

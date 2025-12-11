@@ -122,7 +122,7 @@ plant_metadata = {
         'active_power': 'LGS1 Active Power',
         'rpm': 'LGS1 Governor Unit Speed Actual',
         'aux': 'LGS1-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-LGS1-Gen-CB-Closed-DI',
+        'cb': 'Unit Breaker A1G1 Closed',
         'coef': [20.944, 11.398]
     },
         {
@@ -130,7 +130,7 @@ plant_metadata = {
         'active_power': 'LGS2 Active Power',
         'rpm': 'LGS2 Governor Unit Speed Actual',
         'aux': 'LGS2-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-LGS2-Gen-CB-Closed-DI',
+        'cb': 'Unit Breaker A1G2 Closed',
         'coef': [21.162, 8.49]
     },
         {
@@ -138,7 +138,7 @@ plant_metadata = {
         'active_power': 'LGS3 Active Power',
         'rpm': 'LGS3 Governor Unit Speed Actual',
         'aux': 'LGS3-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-LGS3_Gen-CB-Closed-DI',
+        'cb': 'Unit Breaker A1G3 Closed',
         'coef': [19.66, 13.676]
     }],
     'Balambano': [{
@@ -146,7 +146,7 @@ plant_metadata = {
         'active_power': 'BGS1 Power',
         'rpm': 'GEN SPEED BGS1',
         'aux': 'BGS1-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-BGS1-Brk-DI',
+        'cb': 'Unit breaker BGS1',
         'coef': [17.44, 6.87]
     },
         {
@@ -154,7 +154,7 @@ plant_metadata = {
         'active_power': 'BGS2 Power',
         'rpm': 'GEN SPEED BGS2',
         'aux': 'BGS2-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-BGS2-Brk-DI',
+        'cb': 'Unit breaker BGS2',
         'coef': [21.11, -1.25]
     }],
     'Karebbe': [{
@@ -162,7 +162,7 @@ plant_metadata = {
         'active_power': 'K U1 Active Power (MW)',
         'rpm': 'K U1 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS1-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-KGS1-11KV-Gen_CB_closed-DI',
+        'cb': 'K U1 11kV Gen Circuit 52G1 Breaker Closed',
         'coef': [19.64, 11.05]
     },
         {
@@ -170,7 +170,7 @@ plant_metadata = {
         'active_power': 'K U2 Active Power (MW)',
         'rpm': 'K U2 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS2-Auxiliary Grid (0 = ACTIVE)',
-        'cb': 'U-KGS2-11KV-Gen_CB_closed-DI',
+        'cb': 'K U2 11kV Gen Circuit 52G2 Breaker Closed',
         'coef': [16.84, 23.41]
     }]
 }

@@ -51,17 +51,17 @@ feature_tag_mappingKPI = {
     'LGS1 Active Power': 'U-LGS1-Active-Power-AI',
     'LGS1-Auxiliary Grid (0 = ACTIVE)': 'U-LGS1-N75-15-0-AI',
     'LGS1 Governor Unit Speed Actual': 'U-LGS1-SI-81101-AI',
-    'LGS1 Governor Unit Speed Actual': 'U-LGS1-Gen-CB-Closed-DI',
+    'Unit Breaker A1G1 Closed': 'U-LGS1-Gen-CB-Closed-DI',
     
     'LGS2 Active Power': 'U-LGS2-Active-Power-AI',
     'LGS2-Auxiliary Grid (0 = ACTIVE)': 'U-LGS2-N75-25-0-AI',
     'LGS2 Governor Unit Speed Actual': 'U-LGS2-SI-81201-AI',
-    'LGS2 Governor Unit Speed Actual': 'U-LGS2-Gen-CB-Closed-DI',
+    'Unit Breaker A1G2 Closed': 'U-LGS2-Gen-CB-Closed-DI',
     
     'LGS3 Active Power': 'U-LGS3_Active-Power-AI',
     'LGS3-Auxiliary Grid (0 = ACTIVE)': 'U-LGS3-N75-35-0-AI',
     'LGS3 Governor Unit Speed Actual': 'U-LGS3_SI_81301_I_Eng-AI',
-    'LGS3 Governor Unit Speed Actual': 'U-LGS3_Gen-CB-Closed-DI',
+    'Unit Breaker A1G3 Closed': 'U-LGS3_Gen-CB-Closed-DI',
 
     # BGS
     'BGS1 Power': 'U-BGS1-Power-AI',
