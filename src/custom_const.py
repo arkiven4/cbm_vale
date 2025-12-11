@@ -36,7 +36,8 @@ feature_tag_mapping = {
     'LGB cooling water flow': 'U-LGS1-FIT-81103B-AI',
     'Generator cooling water flow': 'U-LGS1-FIT-81103C-AI',
     'Governor Penstock Pressure': 'U-LGS1-PI-81101-AI',
-    'Penstock pressure': 'U-LGS1-PT-81150-AI'
+    'Penstock pressure': 'U-LGS1-PT-81150-AI',
+    'TGB temperature': 'U-LAR1-TT_811X2-AI',
 }
 
 feature_tag_mappingKPI = {
@@ -50,30 +51,37 @@ feature_tag_mappingKPI = {
     'LGS1 Active Power': 'U-LGS1-Active-Power-AI',
     'LGS1-Auxiliary Grid (0 = ACTIVE)': 'U-LGS1-N75-15-0-AI',
     'LGS1 Governor Unit Speed Actual': 'U-LGS1-SI-81101-AI',
+    'LGS1 Governor Unit Speed Actual': 'U-LGS1-Gen-CB-Closed-DI',
     
     'LGS2 Active Power': 'U-LGS2-Active-Power-AI',
     'LGS2-Auxiliary Grid (0 = ACTIVE)': 'U-LGS2-N75-25-0-AI',
     'LGS2 Governor Unit Speed Actual': 'U-LGS2-SI-81201-AI',
+    'LGS2 Governor Unit Speed Actual': 'U-LGS2-Gen-CB-Closed-DI',
     
     'LGS3 Active Power': 'U-LGS3_Active-Power-AI',
     'LGS3-Auxiliary Grid (0 = ACTIVE)': 'U-LGS3-N75-35-0-AI',
     'LGS3 Governor Unit Speed Actual': 'U-LGS3_SI_81301_I_Eng-AI',
+    'LGS3 Governor Unit Speed Actual': 'U-LGS3_Gen-CB-Closed-DI',
 
     # BGS
     'BGS1 Power': 'U-BGS1-Power-AI',
     'BGS1-Auxiliary Grid (0 = ACTIVE)': 'U-BGS1-N75-45-0-AI',
     'GEN SPEED BGS1': 'U-BGS1_I_T_SPEED-AI',
+    'Unit breaker BGS1': 'U-BGS1-Brk-DI',
 
     'BGS2 Power': 'U-BGS2-Power-AI',
     'BGS2-Auxiliary Grid (0 = ACTIVE)': 'U-BGS2-N75-55-0-AI',
     'GEN SPEED BGS2': 'U-BGS2_I_T_SPEED-AI',
+    'Unit breaker BGS2': 'U-BGS2-Brk-DI',
 
     # KGS
     'K U1 Active Power (MW)': 'U-KGS1-Active_Power_AI',
     'KGS1-Auxiliary Grid (0 = ACTIVE)': 'U-KGS1-N75-65-0-AI',
     'K U1 Turb Gov Turbine Speed (RPM)': 'U-KGS1-Turb_Gov_Turb_Speed-AI',
+    'K U1 11kV Gen Circuit 52G1 Breaker Closed': 'U-KGS1-11KV-Gen_CB_closed-DI',
 
     'K U2 Active Power (MW)': 'U-KGS2-Active_Power_AI',
     'KGS2-Auxiliary Grid (0 = ACTIVE)': 'U-KGS2-N75-75-0-AI',
     'K U2 Turb Gov Turbine Speed (RPM)': 'U-KGS2-Turb_Gov_Turb_Speed-AI',
+    'K U2 11kV Gen Circuit 52G2 Breaker Closed': 'U-KGS2-11KV-Gen_CB_closed-DI',
 }

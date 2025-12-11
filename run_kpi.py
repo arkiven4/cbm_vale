@@ -122,6 +122,7 @@ plant_metadata = {
         'active_power': 'LGS1 Active Power',
         'rpm': 'LGS1 Governor Unit Speed Actual',
         'aux': 'LGS1-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-LGS1-Gen-CB-Closed-DI',
         'coef': [20.944, 11.398]
     },
         {
@@ -129,6 +130,7 @@ plant_metadata = {
         'active_power': 'LGS2 Active Power',
         'rpm': 'LGS2 Governor Unit Speed Actual',
         'aux': 'LGS2-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-LGS2-Gen-CB-Closed-DI',
         'coef': [21.162, 8.49]
     },
         {
@@ -136,6 +138,7 @@ plant_metadata = {
         'active_power': 'LGS3 Active Power',
         'rpm': 'LGS3 Governor Unit Speed Actual',
         'aux': 'LGS3-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-LGS3_Gen-CB-Closed-DI',
         'coef': [19.66, 13.676]
     }],
     'Balambano': [{
@@ -143,6 +146,7 @@ plant_metadata = {
         'active_power': 'BGS1 Power',
         'rpm': 'GEN SPEED BGS1',
         'aux': 'BGS1-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-BGS1-Brk-DI',
         'coef': [17.44, 6.87]
     },
         {
@@ -150,6 +154,7 @@ plant_metadata = {
         'active_power': 'BGS2 Power',
         'rpm': 'GEN SPEED BGS2',
         'aux': 'BGS2-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-BGS2-Brk-DI',
         'coef': [21.11, -1.25]
     }],
     'Karebbe': [{
@@ -157,6 +162,7 @@ plant_metadata = {
         'active_power': 'K U1 Active Power (MW)',
         'rpm': 'K U1 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS1-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-KGS1-11KV-Gen_CB_closed-DI',
         'coef': [19.64, 11.05]
     },
         {
@@ -164,6 +170,7 @@ plant_metadata = {
         'active_power': 'K U2 Active Power (MW)',
         'rpm': 'K U2 Turb Gov Turbine Speed (RPM)',
         'aux': 'KGS2-Auxiliary Grid (0 = ACTIVE)',
+        'cb': 'U-KGS2-11KV-Gen_CB_closed-DI',
         'coef': [16.84, 23.41]
     }]
 }
@@ -172,7 +179,7 @@ plant_metadata = {
 for value in plant_metadata.values():
     for value2 in value:
         commons.init_db_timeconst(['oee', 'phy_avail', 'performance', 'uo_Avail', "aux_0", "aux_1"], "db/kpi.db", value2['name'])
-        commons.init_db_timeconst(['active_power', 'rpm', "aux_0", "aux_1"], "db/kpi.db", value2['name'] + "_timeline")
+        commons.init_db_timeconst(['active_power', 'rpm', 'cb', "aux_0", "aux_1"], "db/kpi.db", value2['name'] + "_timeline")
 
 commons.init_db_timeconst(['hpd', 'ahpa', 'lpd', 'bpd', 'kpd'], "db/kpi.db", "PowerProd")
 
@@ -207,7 +214,7 @@ while True:
                     continue
 
                 df_unit = df_selkpi[[
-                    'TimeStamp', tags['active_power'], tags['rpm'], tags['aux']]].dropna()
+                    'TimeStamp', tags['active_power'], tags['rpm'], tags['cb'], tags['aux']]].dropna()
                 if df_unit.empty:
                     continue
                 
@@ -219,7 +226,7 @@ while True:
 
                 # Process shutdown & SNL
                 shutdown_periods, snl_periods = commons.process_shutdown_and_snl_periods(
-                    df_unit, [tags['active_power'], tags['rpm']]
+                    df_unit, [tags['active_power'], tags['rpm'], tags['cb']]
                 )
 
                 # Compute OEE and related KPIs
@@ -294,7 +301,7 @@ while True:
                 unit_name = tags['name']
 
                 # skip if required columns missing
-                required_cols = [tags['active_power'], tags['rpm'], tags['aux']]
+                required_cols = [tags['active_power'], tags['rpm'], tags['cb'], tags['aux']]
                 if not all(c in df_selkpi_15min.columns for c in required_cols):
                     continue
 
@@ -310,13 +317,14 @@ while True:
                     df_unit['TimeStamp'].astype(str).values,
                     df_unit[tags['active_power']].values,
                     df_unit[tags['rpm']].values,
+                    df_unit[tags['cb']].values,
                     aux_0.values,
                     aux_1.values
                 ])
 
                 # prepare records to insert for this unit only
                 records_to_insert = [
-                    (r[0], np.array(r[1:], dtype=float), ['active_power', 'rpm', 'aux_0', 'aux_1'])
+                    (r[0], np.array(r[1:], dtype=float), ['active_power', 'rpm', 'cb', 'aux_0', 'aux_1'])
                     for r in unit_records
                 ]
 

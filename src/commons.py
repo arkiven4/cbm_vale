@@ -264,8 +264,11 @@ def process_shutdown_and_snl_periods(df_selected, column_name):
 
     activepower_data = sensor_datas[:, 0].astype(float)
     rpm_data = sensor_datas[:, 1].astype(float)
-
-    shutdown_mask = (activepower_data <= 3) & (rpm_data <= 10)
+    cb_data = sensor_datas[:, 2].astype(float)
+    
+    # TODO ; BREAKER OPEN
+    shutdown_mask = (~np.isnan(cb_data)) & (cb_data != 0)
+    #shutdown_mask = (activepower_data <= 3) & (rpm_data <= 10)
     snl_mask = (activepower_data <= 3) & (rpm_data >= 259.35) & (rpm_data <= 286.65)
 
     def extract_periods(mask):

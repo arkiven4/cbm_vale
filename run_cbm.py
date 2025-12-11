@@ -57,7 +57,7 @@ def getdf_piserver(piServer, pi_tag, time_list):
             master_pd = pd.concat([master_pd, value_resp['Values']], axis=1, join='inner')
 
     master_pd = master_pd.values
-    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set + ['Grid Selection'])
+    master_pd = pd.DataFrame(data=master_pd, columns=['TimeStamp'] + feature_set + ['Grid Selection', "TGB temperature"])
     # master_pd.replace('I/O Timeout', np.nan, inplace=True)
     # master_pd.replace('No Data', np.nan, inplace=True)
     # master_pd.replace('Future Data Unsupported', np.nan, inplace=True)
@@ -73,7 +73,7 @@ def getdf_piserver(piServer, pi_tag, time_list):
     df_sel = master_pd.iloc[-120:, :]
     df_sel = df_sel.reset_index(drop=True)
     
-    df_additional = df_sel[['Grid Selection']].copy()
+    df_additional = df_sel[['Grid Selection', "TGB temperature"]].copy()
     df_additional = df_additional.astype(float)
     df_sel = df_sel[['TimeStamp'] + feature_set] 
     return df_sel, df_additional
@@ -101,13 +101,13 @@ feature_set = ['Active Power', 'Reactive Power', 'Governor speed actual', 'UGB X
                'Generator cooling water flow', 'Governor Penstock Pressure',
                'Penstock pressure', 'Opening Wicked Gate', 'UGB Oil Contaminant',
                'Gen Thrust Bearing Oil Contaminant']
-tag_array = [custom_const.feature_tag_mapping[feature] for feature in feature_set + ['Grid Selection']]
+tag_array = [custom_const.feature_tag_mapping[feature] for feature in feature_set + ['Grid Selection', 'TGB temperature']]
 
 # Model used
 model_array = ["Attention", "DTAAD", "MAD_GAN", "TranAD", "DAGMM", "USAD", "OmniAnomaly"]
 ############################ Setup ###############################
 commons.init_db_timeconst(feature_set, "db/original_data.db", "original_data")
-commons.init_db_timeconst(['Grid Selection'], "db/original_data.db", "additional_original_data")
+commons.init_db_timeconst(['Grid Selection', "TGB temperature"], "db/original_data.db", "additional_original_data")
 commons.init_db_timeconst(feature_set, "db/severity_trendings.db", "severity_trendings")
 commons.init_db_timeconst(feature_set, "db/severity_trendings.db", "original_sensor")
 for model_name in model_array:
@@ -223,7 +223,7 @@ while True:
     trend_data = np.array([counter_feature_trd[key]['percentage'] for key in counter_feature_trd]).astype(np.float64)
 
     commons.batch_timeseries_savedb(df_timestamp, commons.trunc(df_feature, decs=2), feature_set, "db/original_data.db", "original_data")
-    commons.batch_timeseries_savedb(df_timestamp, commons.trunc(df_additional, decs=2), ['Grid Selection'], "db/original_data.db", "additional_original_data")
+    commons.batch_timeseries_savedb(df_timestamp, commons.trunc(df_additional, decs=2), ['Grid Selection', "TGB temperature"], "db/original_data.db", "additional_original_data")
     commons.timeseries_savedb(df_timestampi, trend_data, feature_set, "db/severity_trendings.db", "severity_trendings")
     commons.timeseries_savedb(df_timestampi, df_feature_mean, feature_set, "db/severity_trendings.db", "original_sensor")
     for idx_model, (model_name) in enumerate(model_array):
